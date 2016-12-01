@@ -4,7 +4,7 @@
   "description": "A simple REST server boilerplate with koa / babel / webpack",
   "main": "index.js",
   "scripts": {
-    "development": "babel-node index.js",
+    "dev": "babel-node index.js",
     "build": "webpack",
     "run": "node bin/server.bundle.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -12,10 +12,13 @@
   "author": "Romuald R. (romualdr)",
   "license": "ISC",
   "dependencies": {
+    "ali-mns": "^2.4.0",
     "babel-polyfill": "^6.16.0",
     "koa": "^2.0.0-alpha.7",
     "koa-bodyparser": "^3.2.0",
-    "koa-router": "^7.0.1"
+    "koa-router": "^7.0.1",
+    "mongoose": "^4.7.0",
+    "request": "^2.79.0"
   },
   "devDependencies": {
     "babel-cli": "^6.18.0",
