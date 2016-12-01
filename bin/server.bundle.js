@@ -86,6 +86,10 @@
 
 	var _request2 = _interopRequireDefault(_request);
 
+	var _aliyunSdk = __webpack_require__(12);
+
+	var _aliyunSdk2 = _interopRequireDefault(_aliyunSdk);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
@@ -97,12 +101,11 @@
 	var app = new _koa2.default();
 	var router = (0, _koaRouter2.default)();
 	var Strategy = _mongoose2.default.model('strategy', _strategy2.default);
-	var AliClient = new _aliOss2.default({
-	  region: 'oss-cn-beijing',
+
+	var mts = new _aliyunSdk2.default.MTS({
 	  accessKeyId: 'LTAIxbipLqf28JI3',
 	  accessKeySecret: '5kwqCDVAkxyf9G5zE5fMUX3ZHsF74C'
 	});
-
 	/**
 	  Middlewares
 	**/
@@ -308,7 +311,31 @@
 	    }
 	    return true; // this will cause message to be deleted automatically});
 	  });
-	  console.log('Listening on port 3000');
+	  var inputJSON = {
+	    "Bucket": "yuanzi-beijing",
+	    "Location": "oss-cn-beijing",
+	    "Object": "http://yuanzi-beijing.oss-cn-beijing.aliyuncs.com/cardVideo/%E5%85%83%E5%AD%90-%E7%83%98%E7%84%99%E8%AF%BE.mp4"
+	  };
+
+	  var outputsJSON = [{
+	    "OutputObject": "test-zhuanma.m3u8"
+	  }];
+
+	  mts.submit({
+	    Action: 'SubmitJobs',
+	    Input: JSON.stringify(inputJSON),
+	    OutputBucket: "yuanzi-beijing",
+	    OutputLocation: "oss-cn-beijing",
+	    Outputs: JSON.stringify(outputsJSON),
+	    PipelineId: "a22e34ad874349f4b375b2762a4712df"
+	  }, function (err, data) {
+	    if (err) {
+	      console.log(err);
+	      return;
+	    }
+	    console.log('Callback: \n', data);
+	  });
+	  console.log('Listening on port 3210');
 	});
 
 /***/ },
@@ -814,6 +841,12 @@
 /***/ function(module, exports) {
 
 	module.exports = require("request");
+
+/***/ },
+/* 12 */
+/***/ function(module, exports) {
+
+	module.exports = require("aliyun-sdk");
 
 /***/ }
 /******/ ]);

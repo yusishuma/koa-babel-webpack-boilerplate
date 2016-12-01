@@ -19,12 +19,12 @@ var mns = new AliMNS.MNS(AliAccount, "beijing-internal");
 const app = new Koa();
 const router = Router();
 const Strategy = mongoose.model('strategy', strategySchema);
-const AliClient = new oss({
-  region: 'oss-cn-beijing',
-  accessKeyId: 'LTAIxbipLqf28JI3',
-  accessKeySecret: '5kwqCDVAkxyf9G5zE5fMUX3ZHsF74C'
-});
-
+import ALY from 'aliyun-sdk'
+let mts = new ALY.MTS({
+    accessKeyId: 'LTAIxbipLqf28JI3',
+    accessKeySecret: '5kwqCDVAkxyf9G5zE5fMUX3ZHsF74C'
+}
+)
 /**
   Middlewares
 **/
@@ -123,5 +123,29 @@ app.listen(3210, () => {
     }
     return true; // this will cause message to be deleted automatically});
   });
-  console.log('Listening on port 3000');
+  var inputJSON = {
+    "Bucket":"yuanzi-beijing",
+    "Location":"oss-cn-beijing",
+    "Object":"http://yuanzi-beijing.oss-cn-beijing.aliyuncs.com/cardVideo/%E5%85%83%E5%AD%90-%E7%83%98%E7%84%99%E8%AF%BE.mp4"
+  };
+
+  var outputsJSON = [{
+    "OutputObject":"test-zhuanma.m3u8"
+  }];
+
+  mts.submit({
+    Action: 'SubmitJobs',
+    Input: JSON.stringify(inputJSON),
+    OutputBucket:"yuanzi-beijing",
+    OutputLocation:"oss-cn-beijing",
+    Outputs:JSON.stringify(outputsJSON),
+    PipelineId:"a22e34ad874349f4b375b2762a4712df"
+  },function (err, data) {
+    if(err){
+      console.log(err);
+      return;
+    }
+    console.log('Callback: \n',data);
+  });
+  console.log('Listening on port 3210');
 });
