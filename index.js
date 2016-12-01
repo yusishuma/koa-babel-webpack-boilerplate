@@ -100,10 +100,8 @@ router.get('/recvP', async (ctx, next) => {
 
 });
 
-const updateStrate = (Id, ) =>{
-  Strategy.update({_id: Id}, {}){
-
-  }
+const updateStrate = (Id, options) =>{
+  return Strategy.update({_id: Id}, {})
 };
 
 /**
@@ -124,6 +122,6 @@ app.listen(3210, () => {
     // Best to restart the process when this occursthrow err;
     }
     return true; // this will cause message to be deleted automatically});
-  };
+  });
   console.log('Listening on port 3000');
 });

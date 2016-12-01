@@ -62,12 +62,46 @@
 
 	var _exceptions = __webpack_require__(5);
 
+	var _aliMns = __webpack_require__(6);
+
+	var _aliMns2 = _interopRequireDefault(_aliMns);
+
+	var _aliOss = __webpack_require__(7);
+
+	var _aliOss2 = _interopRequireDefault(_aliOss);
+
+	var _mongoose = __webpack_require__(8);
+
+	var _mongoose2 = _interopRequireDefault(_mongoose);
+
+	var _strategy = __webpack_require__(9);
+
+	var _strategy2 = _interopRequireDefault(_strategy);
+
+	var _co = __webpack_require__(10);
+
+	var _co2 = _interopRequireDefault(_co);
+
+	var _request = __webpack_require__(11);
+
+	var _request2 = _interopRequireDefault(_request);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
+	_mongoose2.default.connect('mongodb://yuanzi-test:yuanzi@101.200.89.240:3717/yuanzi-test');
+	var AliAccount = new _aliMns2.default.Account("1365198494842746", "LTAIxbipLqf28JI3", "5kwqCDVAkxyf9G5zE5fMUX3ZHsF74C");
+	var mq = new _aliMns2.default.MQ('MyTestQueue', AliAccount, "beijing-internal");
+	var mns = new _aliMns2.default.MNS(AliAccount, "beijing-internal");
 	var app = new _koa2.default();
 	var router = (0, _koaRouter2.default)();
+	var Strategy = _mongoose2.default.model('strategy', _strategy2.default);
+	var AliClient = new _aliOss2.default({
+	  region: 'oss-cn-beijing',
+	  accessKeyId: 'LTAIxbipLqf28JI3',
+	  accessKeySecret: '5kwqCDVAkxyf9G5zE5fMUX3ZHsF74C'
+	});
 
 	/**
 	  Middlewares
@@ -179,25 +213,101 @@
 	**/
 
 	router.get('/', function (ctx, next) {
+	  var Strategy = _mongoose2.default.model('Strategy', _strategy2.default);
+	  Strategy.count().exec(function (err, result) {
+	    console.log(result);
+	  });
+	  /**
+	   * 订阅
+	   */
+	  _request2.default.get({ url: 'http://1365198494842746.mns.cn-beijing.aliyuncs.com/queues/MyTestQueue', headers: {
+	      "AccessKey": 'LTAIxbipLqf28JI3',
+	      "Signature": 'mns-en-topics-oss-strategyvideo-1480420013112927'
+	    } });
 	  ctx.body = { hello: "world" };
 	});
-
 	/**
+	 * 发送消息
+	 */
+	router.post('/sendP', function () {
+	  var _ref4 = _asyncToGenerator(regeneratorRuntime.mark(function _callee4(ctx, next) {
+	    var message;
+	    return regeneratorRuntime.wrap(function _callee4$(_context4) {
+	      while (1) {
+	        switch (_context4.prev = _context4.next) {
+	          case 0:
+	            message = ctx.params.messages || 'Hello Ali-MNS';
+	            _context4.next = 3;
+	            return mq.sendP(message, 8, 0).then(console.log, console.error);
 
-	You can use ES7 async/await syntax
-	router.get('/:name', async (ctx, next) => {
+	          case 3:
+	            ctx.body = _context4.sent;
 
-	  ctx.body = await somethingReturningAPromise();
+	          case 4:
+	          case 'end':
+	            return _context4.stop();
+	        }
+	      }
+	    }, _callee4, undefined);
+	  }));
 
-	});
+	  return function (_x7, _x8) {
+	    return _ref4.apply(this, arguments);
+	  };
+	}());
+	/**
+	 * 接收消息
+	 */
+	router.get('/recvP', function () {
+	  var _ref5 = _asyncToGenerator(regeneratorRuntime.mark(function _callee5(ctx, next) {
+	    var message;
+	    return regeneratorRuntime.wrap(function _callee5$(_context5) {
+	      while (1) {
+	        switch (_context5.prev = _context5.next) {
+	          case 0:
+	            message = ctx.params.messages || 'Hello Ali-MNS';
+	            _context5.next = 3;
+	            return mq.recvP(5).then(console.log, console.error);
 
-	**/
+	          case 3:
+	            ctx.body = _context5.sent;
+
+	          case 4:
+	          case 'end':
+	            return _context5.stop();
+	        }
+	      }
+	    }, _callee5, undefined);
+	  }));
+
+	  return function (_x9, _x10) {
+	    return _ref5.apply(this, arguments);
+	  };
+	}());
+
+	var updateStrate = function updateStrate(Id, options) {
+	  return Strategy.update({ _id: Id }, {});
+	};
 
 	/**
 	 launch
 	**/
 
-	app.listen(3000, function () {
+	app.listen(3210, function () {
+	  console.log('==============start==============');
+	  mns.listP("My", 20).then(function (data) {
+	    console.log(data);
+	    return mns.listP("My", 20, data.Queues.NextMarker);
+	  }).then(function (dataP2) {
+	    console.log(dataP2);
+	  }, console.error);
+	  mq.notifyRecv(function (err, message) {
+	    console.log('notify===', message);
+	    if (err && err.message === "NetworkBroken") {
+	      // Best to restart the process when this occursthrow err;
+	    }
+	    return true; // this will cause message to be deleted automatically});
+	  });
 	  console.log('Listening on port 3000');
 	});
 
@@ -334,6 +444,376 @@
 	  if (exception instanceof HTTPException) return { ok: false, error: true, message: exception.message, status: exception.status, type: exception.type };
 	  throw exception;
 	}
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	module.exports = require("ali-mns");
+
+/***/ },
+/* 7 */
+/***/ function(module, exports) {
+
+	module.exports = require("ali-oss");
+
+/***/ },
+/* 8 */
+/***/ function(module, exports) {
+
+	module.exports = require("mongoose");
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var _mongoose = __webpack_require__(8);
+
+	var _mongoose2 = _interopRequireDefault(_mongoose);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var Schema = _mongoose2.default.Schema;
+	var ObjectId = Schema.Types.ObjectId;
+	var stepSchema = new Schema({ // 加载图片
+	    imgUrl: {
+	        type: String,
+	        default: ''
+
+	    },
+	    description: {
+	        type: String,
+	        default: ''
+	    },
+	    timePoint: { // 截止时间节点
+	        type: Number,
+	        default: 0
+	    }
+
+	}, {
+	    id: false,
+	    toObject: {
+	        getters: true
+
+	    },
+	    toJSON: {
+	        getters: true
+
+	    }
+
+	});
+
+	var userScoreSchema = new Schema({ // 图片 + 描述
+	    user: {
+	        type: ObjectId,
+	        ref: 'UserV2',
+	        required: true
+	    },
+	    score: {
+	        type: String,
+	        default: 'level5',
+	        enum: ['level1', 'level2', 'level3', 'level4', 'level5']
+	    }
+
+	}, {
+	    id: false,
+	    toObject: {
+	        getters: true
+
+	    },
+	    toJSON: {
+	        getters: true
+
+	    }
+
+	});
+	var collectSchema = new Schema({ // 图片 + 描述
+	    user: {
+	        type: ObjectId,
+	        ref: 'UserV2'
+	    },
+	    collectedAt: {
+	        type: Date,
+	        required: true,
+	        default: Date.now
+	    }
+
+	}, {
+	    id: false,
+	    toObject: {
+	        getters: true
+
+	    },
+	    toJSON: {
+	        getters: true
+
+	    }
+
+	});
+	var reportSchema = new Schema({ // 图片 + 描述
+	    user: {
+	        type: ObjectId,
+	        ref: 'UserV2'
+	    },
+	    operatedAt: {
+	        type: Date,
+	        required: true,
+	        default: Date.now
+	    },
+	    reason: {
+	        type: String,
+	        default: ''
+	    }
+
+	}, {
+	    id: false,
+	    toObject: {
+	        getters: true
+
+	    },
+	    toJSON: {
+	        getters: true
+
+	    }
+
+	});
+	var toolSchema = new Schema({ // 图片 + 描述
+	    title: {
+	        type: String,
+	        default: ''
+	    },
+	    amount: {
+	        type: String,
+	        default: ''
+	    }
+
+	}, {
+	    id: false,
+	    toObject: {
+	        getters: true
+
+	    },
+	    toJSON: {
+	        getters: true
+
+	    }
+
+	});
+	var materialSchema = new Schema({ // 图片 + 描述
+	    title: {
+	        type: String,
+	        default: ''
+	    },
+	    amount: {
+	        type: String,
+	        default: ''
+	    }
+
+	}, {
+	    id: false,
+	    toObject: {
+	        getters: true
+
+	    },
+	    toJSON: {
+	        getters: true
+
+	    }
+
+	});
+	var strategySchema = new Schema({
+	    cover: {
+	        type: String,
+	        default: ''
+	    },
+	    owner: { // 妙招作者
+	        type: ObjectId,
+	        ref: 'UserV2'
+
+	    }, // own user id
+	    title: { // 标题
+	        type: String,
+	        default: ''
+
+	    },
+	    labels: {
+	        type: [{
+	            type: ObjectId,
+	            ref: 'label'
+	        }]
+	    },
+	    scope: { //该妙招适用范围
+	        type: Number,
+	        default: 0,
+	        enum: [0, 1, 2, 3, 4, 5]
+	    },
+	    degree: { //难度系数 分为5级
+	        type: Number,
+	        enum: [1, 2, 3, 4, 5]
+	    },
+	    consumingTime: { //改妙招耗时
+	        type: Number,
+	        enum: [1, 2, 3]
+	    },
+	    tools: { //工具
+	        type: [toolSchema]
+	    },
+	    materials: { //用料
+	        type: [materialSchema]
+	    },
+	    content: { // 正文
+	        type: String,
+	        default: ''
+	    },
+	    subTitle: { // 副标题
+	        type: String,
+	        default: ''
+
+	    },
+	    good: { // 购买链接
+	        type: String
+	    },
+	    description: { // 描述
+	        type: String,
+	        default: ''
+
+	    },
+	    /**
+	     * 视频
+	     */
+	    video: {
+	        type: String
+	    },
+	    /**
+	     * 音频
+	     */
+	    soundStory: {
+	        type: String,
+	        default: ''
+
+	    },
+	    /**
+	     * 音频时长
+	     */
+	    soundStoryLength: {
+	        type: Number,
+	        default: 0
+
+	    },
+	    steps: { // 图片顺序及播放时间、
+	        type: [stepSchema]
+
+	    },
+	    praiseUsers: { // 收藏（点赞）者
+	        type: [{
+	            type: ObjectId,
+	            ref: 'UserV2'
+
+	        }]
+
+	    },
+	    playUsers: { // 播放者
+	        type: [{
+	            type: ObjectId,
+	            ref: 'UserV2'
+	        }]
+	    },
+	    collectUsers: { // 收藏者
+	        type: [collectSchema]
+	    },
+	    sharedUsers: { // 分享者
+	        type: [{
+	            type: ObjectId,
+	            ref: 'UserV2'
+	        }]
+	    },
+	    reportUsers: { // 举报者
+	        type: [reportSchema]
+	    },
+	    isRecommended: { // 推荐
+	        stateType: {
+	            type: String,
+	            default: 'undone',
+	            enum: ['done', //通过审核
+	            'undone', //待审核
+	            'rejected', //未通过审核的
+	            'delete'] // 推荐，未被推荐
+	        },
+	        recommendAt: {
+	            type: Date,
+	            default: Date.now
+	        }
+	    },
+	    photoCount: { //作品数
+	        type: Number,
+	        default: 0
+	    },
+	    userScores: { // 用户评分
+	        type: [userScoreSchema]
+	    },
+	    scores: {
+	        level1: {
+	            type: Number,
+	            default: 0
+	        },
+	        level2: {
+	            type: Number,
+	            default: 0
+	        },
+	        level3: {
+	            type: Number,
+	            default: 0
+	        },
+	        level4: {
+	            type: Number,
+	            default: 0
+	        },
+	        level5: {
+	            type: Number,
+	            default: 0
+	        }
+	    },
+	    createdAt: {
+	        type: Date,
+	        required: true,
+	        default: Date.now
+
+	    },
+	    updatedAt: {
+	        type: Date,
+	        required: true,
+	        default: Date.now
+	    },
+	    //虚拟数
+	    artificialCount: {
+	        type: Number,
+	        default: 0
+	    },
+	    artificialdata: {
+	        artificialtrycount: {
+	            type: Number
+	        },
+	        artificialscore: {
+	            type: Number
+	        }
+	    }
+	});
+
+	exports.strategySchema = strategySchema;
+
+/***/ },
+/* 10 */
+/***/ function(module, exports) {
+
+	module.exports = require("co");
+
+/***/ },
+/* 11 */
+/***/ function(module, exports) {
+
+	module.exports = require("request");
 
 /***/ }
 /******/ ]);
