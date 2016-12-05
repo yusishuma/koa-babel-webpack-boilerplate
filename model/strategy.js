@@ -218,6 +218,9 @@ var strategySchema = new Schema({
     video: {
         type: String
     },
+    videoPoster: {
+        type: String
+    },
     /**
      * 音频
      */

@@ -7,66 +7,62 @@ import Router from 'koa-router';
 import BodyParser from 'koa-bodyparser';
 import { Exceptions, ExceptionHandler } from './exceptions';
 import AliMNS from 'ali-mns';
-import oss from 'ali-oss';
 import mongoose from 'mongoose';
 import strategySchema from './model/strategy'
-import co from 'co';
 import request from 'request';
-mongoose.connect('mongodb://yuanzi-test:yuanzi@101.200.89.240:3717/yuanzi-test');
-const  AliAccount = new AliMNS.Account("1365198494842746", "LTAIxbipLqf28JI3", "5kwqCDVAkxyf9G5zE5fMUX3ZHsF74C");
-const mq = new AliMNS.MQ('MyTestQueue', AliAccount, "beijing-internal");
-var mns = new AliMNS.MNS(AliAccount, "beijing-internal");
+import dotenv from 'dotenv';
+import variableExpansion from 'dotenv-expand';
+const myEnv = dotenv.config();
+variableExpansion(myEnv);
+mongoose.connect(myEnv.Mongodb);
 const app = new Koa();
 const router = Router();
 const Strategy = mongoose.model('strategy', strategySchema);
 import ALY from 'aliyun-sdk'
-let mts = new ALY.MTS({
-    accessKeyId: 'LTAIxbipLqf28JI3',
-    accessKeySecret: '5kwqCDVAkxyf9G5zE5fMUX3ZHsF74C'
-}
-)
+import Q from 'q';
+const  AliAccount = new AliMNS.Account(myEnv.AliAccount, myEnv.accessKeyId, myEnv.accessKeySecret);
+const mq = new AliMNS.MQ('MyTestQueue', AliAccount, "beijing-internal");
+
 /**
-  Middlewares
-**/
+ Middlewares
+ **/
 
 app
-  // Counting time
-  .use(async (ctx, next) => {
-    let start = Date.now();
-    await next();
-    console.log(`[${ctx.request.method}][${ctx.request.url}] ${Date.now() - start} ms.`);
-  })
-  .use(async (ctx, next) => {
-    try {
+// Counting time
+    .use(async (ctx, next) => {
+      let start = Date.now();
       await next();
-      if (!ctx.body)
-        throw new Exceptions.NotFound(`Endpoint [${ctx.request.url}] not found.`);
-      ctx.body = {
-        ok: true,
-        content: ctx.body
-      };
-    } catch (e) {
-      ctx.body = ExceptionHandler(e);
-    }
-  })
-  // Body parser
-  .use(BodyParser())
-  .use(async (ctx, next) => {
-    ctx.state = {};
-    ctx.state.query = ctx.request.query;
-    ctx.state.body = ctx.request.body;
-    await next();
-  })
-  // routes
-  .use(router.routes())
-  // Allowed methods
-  .use(router.allowedMethods());
-
-
+      console.log(`[${ctx.request.method}][${ctx.request.url}] ${Date.now() - start} ms.`);
+    })
+    .use(async (ctx, next) => {
+      try {
+        await next();
+        if (!ctx.body)
+          throw new Exceptions.NotFound(`Endpoint [${ctx.request.url}] not found.`);
+        ctx.body = {
+          ok: true,
+          content: ctx.body
+        };
+      } catch (e) {
+        ctx.body = ExceptionHandler(e);
+      }
+    })
+    // Body parser
+    .use(BodyParser())
+    .use(async (ctx, next) => {
+      ctx.state = {};
+      ctx.state.query = ctx.request.query;
+      ctx.state.body = ctx.request.body;
+      await next();
+    })
+    // routes
+    .use(router.routes())
+    // Allowed methods
+    .use(router.allowedMethods());
 
 /**
-  Routes
-**/
+ Routes
+ **/
 
 router.get('/', (ctx, next) => {
   const Strategy = mongoose.model('Strategy', strategySchema);
@@ -87,7 +83,7 @@ router.get('/', (ctx, next) => {
  * 发送消息
  */
 router.post('/sendP', async (ctx, next) => {
-  var message = ctx.params.messages || 'Hello Ali-MNS';
+  let message = ctx.params.messages || 'Hello Ali-MNS';
   ctx.body = await mq.sendP(message, 8, 0).then(console.log, console.error);
 
 });
@@ -95,57 +91,105 @@ router.post('/sendP', async (ctx, next) => {
  * 接收消息
  */
 router.get('/recvP', async (ctx, next) => {
-  var message = ctx.params.messages || 'Hello Ali-MNS';
+  let message = ctx.params.messages || 'Hello Ali-MNS';
   ctx.body = await mq.recvP(5).then(console.log, console.error);
 
 });
-
-const updateStrate = (Id, options) =>{
-  return Strategy.update({_id: Id}, {})
+/**
+ * 转码、水印
+ */
+const transcoding = (inputFile, outputFile) => {
+  let inputJSON = {
+    "Bucket": myEnv.Bucket,
+    "Location": myEnv.Location,
+    "Object": inputFile
+  };
+  let outputsJSON = [{
+    "OutputObject": outputFile,
+    "TemplateId": "S00000001-100020",
+    "WaterMarks": [{
+      "InputFile": {
+        "Bucket": myEnv.Bucket,
+        "Location": myEnv.Location,
+        "Object": "photo/watermark.png"
+      },
+      "WaterMarkTemplateId": myEnv.WaterMarkTemplateId,
+      "UserData": "testwatermark"
+    }],
+  }];
+  let mts = new ALY.MTS({
+    "accessKeyId": myEnv.accessKeyId,
+    "secretAccessKey": myEnv.secretAccessKey,
+    "apiVersion": "2014-06-18",
+    "region": "mts.cn-beijing.aliyuncs.com",
+    "endpoint": "http://mts.cn-beijing.aliyuncs.com",
+  });
+  Q.all([function () {
+    mts.submitSnapshotJob({
+      Action: "SubmitSnapshotJob",
+      Input: JSON.stringify(inputJSON),
+      SnapshotConfig: JSON.stringify({
+        "OutputFile": {
+          "Bucket": "yuanzi-assets",
+          "Location": "oss-cn-beijing",
+          "Object": outputFile + ".jpg"
+        },
+        "Time": "12500"
+      }),
+      PipelineId: "a22e34ad874349f4b375b2762a4712df",
+      UserData: 'testsnapshot'
+    }, function (err, data) {
+      if (err) {
+        console.log(err)
+      }
+      console.log('data', data);
+      return data
+    })
+  }, function () {
+    mts.submitJobs({// 转码、水印
+      Action: "SubmitJobs",
+      Input: JSON.stringify(inputJSON),
+      Outputs: JSON.stringify(outputsJSON),
+      OutputBucket: myEnv.Bucket,
+      OutputLocation: myEnv.Location,
+      PipelineId: myEnv.PipelineId
+    }, function (err, data) {
+      if (err) {
+        console.log(err);
+      }
+      console.log(data);
+      return data
+    });
+  }
+  ]).then(function (results) {
+    return results;
+  });
+};
+/**
+ * 更新strategy
+ */
+const updateStrategy = (Id) =>{
+  Strategy.findById(Id).then(function (json) {
+    return transcoding(json.video, 'users/'+json.owner+'/strategies/vcr/'+Id)
+  }).then(function (results) {
+    console.log('=====results====');
+    var url = myEnv.urlPrefix + 'users/'+json.owner+'/strategies/vcr/'+Id;
+    return Strategy.update({_id: Id}, {video: url, videoPoster: url + '.jpg' })
+  })
 };
 
 /**
  launch
-**/
-
+ */
 app.listen(3210, () => {
   console.log('==============start==============');
-  mns.listP("My", 20).then(function(data){
-    console.log(data);
-    return mns.listP("My", 20, data.Queues.NextMarker);
-  }).then(function(dataP2){
-    console.log(dataP2);
-  }, console.error);
   mq.notifyRecv(function(err, message){
     console.log('notify===', message);
     if(err && err.message === "NetworkBroken"){
-    // Best to restart the process when this occursthrow err;
+      // Best to restart the process when this occursthrow err;
     }
+     updateStrategy('583e37e7b90601482c1f613e');
     return true; // this will cause message to be deleted automatically});
-  });
-  var inputJSON = {
-    "Bucket":"yuanzi-beijing",
-    "Location":"oss-cn-beijing",
-    "Object":"http://yuanzi-beijing.oss-cn-beijing.aliyuncs.com/cardVideo/%E5%85%83%E5%AD%90-%E7%83%98%E7%84%99%E8%AF%BE.mp4"
-  };
-
-  var outputsJSON = [{
-    "OutputObject":"test-zhuanma.m3u8"
-  }];
-
-  mts.submit({
-    Action: 'SubmitJobs',
-    Input: JSON.stringify(inputJSON),
-    OutputBucket:"yuanzi-beijing",
-    OutputLocation:"oss-cn-beijing",
-    Outputs:JSON.stringify(outputsJSON),
-    PipelineId:"a22e34ad874349f4b375b2762a4712df"
-  },function (err, data) {
-    if(err){
-      console.log(err);
-      return;
-    }
-    console.log('Callback: \n',data);
   });
   console.log('Listening on port 3210');
 });

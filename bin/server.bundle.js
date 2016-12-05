@@ -66,49 +66,51 @@
 
 	var _aliMns2 = _interopRequireDefault(_aliMns);
 
-	var _aliOss = __webpack_require__(7);
-
-	var _aliOss2 = _interopRequireDefault(_aliOss);
-
-	var _mongoose = __webpack_require__(8);
+	var _mongoose = __webpack_require__(7);
 
 	var _mongoose2 = _interopRequireDefault(_mongoose);
 
-	var _strategy = __webpack_require__(9);
+	var _strategy = __webpack_require__(8);
 
 	var _strategy2 = _interopRequireDefault(_strategy);
 
-	var _co = __webpack_require__(10);
-
-	var _co2 = _interopRequireDefault(_co);
-
-	var _request = __webpack_require__(11);
+	var _request = __webpack_require__(9);
 
 	var _request2 = _interopRequireDefault(_request);
+
+	var _dotenv = __webpack_require__(10);
+
+	var _dotenv2 = _interopRequireDefault(_dotenv);
+
+	var _dotenvExpand = __webpack_require__(11);
+
+	var _dotenvExpand2 = _interopRequireDefault(_dotenvExpand);
 
 	var _aliyunSdk = __webpack_require__(12);
 
 	var _aliyunSdk2 = _interopRequireDefault(_aliyunSdk);
 
+	var _q = __webpack_require__(13);
+
+	var _q2 = _interopRequireDefault(_q);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
-	_mongoose2.default.connect('mongodb://yuanzi-test:yuanzi@101.200.89.240:3717/yuanzi-test');
-	var AliAccount = new _aliMns2.default.Account("1365198494842746", "LTAIxbipLqf28JI3", "5kwqCDVAkxyf9G5zE5fMUX3ZHsF74C");
-	var mq = new _aliMns2.default.MQ('MyTestQueue', AliAccount, "beijing-internal");
-	var mns = new _aliMns2.default.MNS(AliAccount, "beijing-internal");
+	var myEnv = _dotenv2.default.config();
+	(0, _dotenvExpand2.default)(myEnv);
+	_mongoose2.default.connect(myEnv.Mongodb);
 	var app = new _koa2.default();
 	var router = (0, _koaRouter2.default)();
 	var Strategy = _mongoose2.default.model('strategy', _strategy2.default);
 
-	var mts = new _aliyunSdk2.default.MTS({
-	  accessKeyId: 'LTAIxbipLqf28JI3',
-	  accessKeySecret: '5kwqCDVAkxyf9G5zE5fMUX3ZHsF74C'
-	});
+	var AliAccount = new _aliMns2.default.Account(myEnv.AliAccount, myEnv.accessKeyId, myEnv.accessKeySecret);
+	var mq = new _aliMns2.default.MQ('MyTestQueue', AliAccount, "beijing-internal");
+
 	/**
-	  Middlewares
-	**/
+	 Middlewares
+	 **/
 
 	app
 	// Counting time
@@ -212,8 +214,8 @@
 	.use(router.allowedMethods());
 
 	/**
-	  Routes
-	**/
+	 Routes
+	 **/
 
 	router.get('/', function (ctx, next) {
 	  var Strategy = _mongoose2.default.model('Strategy', _strategy2.default);
@@ -287,53 +289,100 @@
 	    return _ref5.apply(this, arguments);
 	  };
 	}());
-
-	var updateStrate = function updateStrate(Id, options) {
-	  return Strategy.update({ _id: Id }, {});
+	/**
+	 * 转码、水印
+	 */
+	var transcoding = function transcoding(inputFile, outputFile) {
+	  var inputJSON = {
+	    "Bucket": myEnv.Bucket,
+	    "Location": myEnv.Location,
+	    "Object": inputFile
+	  };
+	  var outputsJSON = [{
+	    "OutputObject": outputFile,
+	    "TemplateId": "S00000001-100020",
+	    "WaterMarks": [{
+	      "InputFile": {
+	        "Bucket": myEnv.Bucket,
+	        "Location": myEnv.Location,
+	        "Object": "photo/watermark.png"
+	      },
+	      "WaterMarkTemplateId": myEnv.WaterMarkTemplateId,
+	      "UserData": "testwatermark"
+	    }]
+	  }];
+	  var mts = new _aliyunSdk2.default.MTS({
+	    "accessKeyId": myEnv.accessKeyId,
+	    "secretAccessKey": myEnv.secretAccessKey,
+	    "apiVersion": "2014-06-18",
+	    "region": "mts.cn-beijing.aliyuncs.com",
+	    "endpoint": "http://mts.cn-beijing.aliyuncs.com"
+	  });
+	  _q2.default.all([function () {
+	    mts.submitSnapshotJob({
+	      Action: "SubmitSnapshotJob",
+	      Input: JSON.stringify(inputJSON),
+	      SnapshotConfig: JSON.stringify({
+	        "OutputFile": {
+	          "Bucket": "yuanzi-assets",
+	          "Location": "oss-cn-beijing",
+	          "Object": outputFile + ".jpg"
+	        },
+	        "Time": "12500"
+	      }),
+	      PipelineId: "a22e34ad874349f4b375b2762a4712df",
+	      UserData: 'testsnapshot'
+	    }, function (err, data) {
+	      if (err) {
+	        console.log(err);
+	      }
+	      console.log('data', data);
+	      return data;
+	    });
+	  }, function () {
+	    mts.submitJobs({ // 转码、水印
+	      Action: "SubmitJobs",
+	      Input: JSON.stringify(inputJSON),
+	      Outputs: JSON.stringify(outputsJSON),
+	      OutputBucket: myEnv.Bucket,
+	      OutputLocation: myEnv.Location,
+	      PipelineId: myEnv.PipelineId
+	    }, function (err, data) {
+	      if (err) {
+	        console.log(err);
+	      }
+	      console.log(data);
+	      return data;
+	    });
+	  }]).then(function (results) {
+	    return results;
+	  });
+	};
+	/**
+	 * 更新strategy
+	 */
+	var updateStrategy = function updateStrategy(Id) {
+	  Strategy.findById(Id).then(function (json) {
+	    return transcoding(json.video, 'users/' + json.owner + '/strategies/vcr/' + Id);
+	  }).then(function (results) {
+	    console.log('=====results====');
+	    var url = myEnv.urlPrefix + 'users/' + json.owner + '/strategies/vcr/' + Id;
+	    return Strategy.update({ _id: Id }, { video: url, videoPoster: url + '.jpg' });
+	  });
 	};
 
 	/**
 	 launch
-	**/
-
+	 */
 	app.listen(3210, function () {
 	  console.log('==============start==============');
-	  mns.listP("My", 20).then(function (data) {
-	    console.log(data);
-	    return mns.listP("My", 20, data.Queues.NextMarker);
-	  }).then(function (dataP2) {
-	    console.log(dataP2);
-	  }, console.error);
 	  mq.notifyRecv(function (err, message) {
 	    console.log('notify===', message);
 	    if (err && err.message === "NetworkBroken") {
 	      // Best to restart the process when this occursthrow err;
 	    }
+	    updateStrategy('583e37e7b90601482c1f613e');
 	    return true; // this will cause message to be deleted automatically});
-	  });
-	  var inputJSON = {
-	    "Bucket": "yuanzi-beijing",
-	    "Location": "oss-cn-beijing",
-	    "Object": "http://yuanzi-beijing.oss-cn-beijing.aliyuncs.com/cardVideo/%E5%85%83%E5%AD%90-%E7%83%98%E7%84%99%E8%AF%BE.mp4"
-	  };
-
-	  var outputsJSON = [{
-	    "OutputObject": "test-zhuanma.m3u8"
-	  }];
-
-	  mts.submit({
-	    Action: 'SubmitJobs',
-	    Input: JSON.stringify(inputJSON),
-	    OutputBucket: "yuanzi-beijing",
-	    OutputLocation: "oss-cn-beijing",
-	    Outputs: JSON.stringify(outputsJSON),
-	    PipelineId: "a22e34ad874349f4b375b2762a4712df"
-	  }, function (err, data) {
-	    if (err) {
-	      console.log(err);
-	      return;
-	    }
-	    console.log('Callback: \n', data);
 	  });
 	  console.log('Listening on port 3210');
 	});
@@ -482,21 +531,15 @@
 /* 7 */
 /***/ function(module, exports) {
 
-	module.exports = require("ali-oss");
-
-/***/ },
-/* 8 */
-/***/ function(module, exports) {
-
 	module.exports = require("mongoose");
 
 /***/ },
-/* 9 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var _mongoose = __webpack_require__(8);
+	var _mongoose = __webpack_require__(7);
 
 	var _mongoose2 = _interopRequireDefault(_mongoose);
 
@@ -713,6 +756,9 @@
 	    video: {
 	        type: String
 	    },
+	    videoPoster: {
+	        type: String
+	    },
 	    /**
 	     * 音频
 	     */
@@ -831,22 +877,34 @@
 	exports.strategySchema = strategySchema;
 
 /***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+	module.exports = require("request");
+
+/***/ },
 /* 10 */
 /***/ function(module, exports) {
 
-	module.exports = require("co");
+	module.exports = require("dotenv");
 
 /***/ },
 /* 11 */
 /***/ function(module, exports) {
 
-	module.exports = require("request");
+	module.exports = require("dotenv-expand");
 
 /***/ },
 /* 12 */
 /***/ function(module, exports) {
 
 	module.exports = require("aliyun-sdk");
+
+/***/ },
+/* 13 */
+/***/ function(module, exports) {
+
+	module.exports = require("q");
 
 /***/ }
 /******/ ]);
