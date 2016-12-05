@@ -65,7 +65,6 @@ app
  **/
 
 router.get('/', (ctx, next) => {
-  const Strategy = mongoose.model('Strategy', strategySchema);
   Strategy.count().exec((err, result) => {
     console.log(result)
   });
@@ -170,11 +169,12 @@ const transcoding = (inputFile, outputFile) => {
  */
 const updateStrategy = (Id) =>{
   Strategy.findById(Id).then(function (json) {
+    console.log(json);
     return transcoding(json.video, 'users/'+json.owner+'/strategies/vcr/'+Id)
   }).then(function (results) {
     console.log('=====results====');
     var url = myEnv.urlPrefix + 'users/'+json.owner+'/strategies/vcr/'+Id;
-    return Strategy.update({_id: Id}, {video: url, videoPoster: url + '.jpg' })
+    return Strategy.update({_id: Id}, {'$set': {video: url, videoPoster: url + '.jpg' }})
   })
 };
 
