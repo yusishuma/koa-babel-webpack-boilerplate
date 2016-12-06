@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 const Schema = mongoose.Schema;
 const ObjectId = Schema.Types.ObjectId;
-var stepSchema = new Schema({ // 加载图片
+const stepSchema = new Schema({ // 加载图片
     imgUrl: {
         type: String,
         default: ''
@@ -29,7 +29,7 @@ var stepSchema = new Schema({ // 加载图片
 
 });
 
-var userScoreSchema = new Schema({// 图片 + 描述
+const userScoreSchema = new Schema({// 图片 + 描述
     user: {
         type: ObjectId,
         ref: 'UserV2',
@@ -59,7 +59,7 @@ var userScoreSchema = new Schema({// 图片 + 描述
     }
 
 });
-var collectSchema = new Schema({// 图片 + 描述
+const collectSchema = new Schema({// 图片 + 描述
     user: {
         type: ObjectId,
         ref: 'UserV2'
@@ -82,7 +82,7 @@ var collectSchema = new Schema({// 图片 + 描述
     }
 
 });
-var reportSchema = new Schema({// 图片 + 描述
+const reportSchema = new Schema({// 图片 + 描述
     user: {
         type: ObjectId,
         ref: 'UserV2'
@@ -109,7 +109,7 @@ var reportSchema = new Schema({// 图片 + 描述
     }
 
 });
-var toolSchema = new Schema({// 图片 + 描述
+const toolSchema = new Schema({// 图片 + 描述
     title: {
         type: String,
         default: ''
@@ -131,7 +131,7 @@ var toolSchema = new Schema({// 图片 + 描述
     }
 
 });
-var materialSchema = new Schema({// 图片 + 描述
+const materialSchema = new Schema({// 图片 + 描述
     title: {
         type: String,
         default: ''
@@ -153,7 +153,7 @@ var materialSchema = new Schema({// 图片 + 描述
     }
 
 });
-var strategySchema = new Schema({
+const strategySchema = new Schema({
     cover: {
         type: String,
         default: ''
@@ -352,4 +352,4 @@ var strategySchema = new Schema({
     }
 });
 
-exports.strategySchema = strategySchema;
+export default strategySchema;
