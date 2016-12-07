@@ -90,6 +90,10 @@
 
 	var _q2 = _interopRequireDefault(_q);
 
+	var _nodeFetch = __webpack_require__(13);
+
+	var _nodeFetch2 = _interopRequireDefault(_nodeFetch);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
@@ -103,7 +107,8 @@
 	var Strategy = _mongoose2.default.model('Strategy', _strategy2.default);
 
 	var AliAccount = new _aliMns2.default.Account(myEnv.AliAccount, myEnv.accessKeyId, myEnv.accessKeySecret);
-	var mq = new _aliMns2.default.MQ(myEnv.QueueName, AliAccount, "beijing-internal");
+	var mq = new _aliMns2.default.MQ(myEnv.QueueName, AliAccount, "hangzhou");
+
 
 	/**
 	 Middlewares
@@ -261,7 +266,8 @@
 			if (!jsonData && !jsonData.video && jsonData.video.split('com/').length < 0) {
 				return null;
 			}
-			objectPath = 'users/' + jsonData.owner + '/strategies/' + jsonData._id + '/vcr';
+
+			objectPath = 'users/' + jsonData.owner + '/strategies/vcr';
 			var inputJSON = {
 				"Bucket": myEnv.Bucket,
 				"Location": myEnv.Location,
@@ -284,8 +290,8 @@
 				"accessKeyId": myEnv.accessKeyId,
 				"secretAccessKey": myEnv.accessKeySecret,
 				"apiVersion": "2014-06-18",
-				"region": "mts.cn-beijing.aliyuncs.com",
-				"endpoint": "http://mts.cn-beijing.aliyuncs.com"
+				"region": myEnv.region,
+				"endpoint": myEnv.endpoint
 			});
 			return _q2.default.fcall(function () {
 				mts.submitSnapshotJob({
@@ -305,10 +311,11 @@
 					if (err) {
 						console.log(err);
 					}
-					console.log(data);
+					console.log("snapshot", data);
 					return data;
 				});
 			}).then(function () {
+				console.log("=======转码、水印=======");
 				mts.submitJobs({ // 转码、水印
 					Action: "SubmitJobs",
 					Input: JSON.stringify(inputJSON),
@@ -320,7 +327,7 @@
 					if (err) {
 						console.log(err);
 					}
-					console.log(data);
+					console.log("SubmitJobs", data);
 					return data;
 				});
 			}).then(function () {
@@ -346,12 +353,28 @@
 			if (err) {
 				// Best to restart the process when this occursthrow err;
 			} else {
-				var messageBody = JSON.parse(message.Message.MessageBody);
-				console.log('notify===', messageBody);
-				if (messageBody && messageBody.strategy) {
-					updateStrategy(messageBody.strategy);
-				}
-				return true;
+				(function () {
+					var messageBody = JSON.parse(message.Message.MessageBody);
+					console.log('notify===', messageBody);
+					if (messageBody && messageBody.strategy) {
+						Strategy.findById(messageBody.strategy).then(function (json) {
+							var jsonData = json.toJSON();
+							(0, _nodeFetch2.default)(jsonData.video, {
+								method: 'GET'
+							}).then(function (response) {
+								if (response.ok) {
+									updateStrategy(messageBody.strategy);
+								} else {
+									if (jsonData.video.search('aliyuncs.com') > 0 && jsonData.video.search('yuanzi-') > 0) {
+										return false;
+									} else {
+										return true;
+									}
+								}
+							});
+						});
+					}
+				})();
 			}
 		});
 		console.log('Listening on port 3210');
@@ -873,6 +896,12 @@
 /***/ function(module, exports) {
 
 	module.exports = require("q");
+
+/***/ },
+/* 13 */
+/***/ function(module, exports) {
+
+	module.exports = require("node-fetch");
 
 /***/ }
 /******/ ]);

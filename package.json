@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "babel-node index.js",
     "build": "webpack",
-    "run": "node bin/server.bundle.js",
+    "strat": "node bin/server.bundle.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Romuald R. (romualdr)",
@@ -21,9 +21,25 @@
     "koa-bodyparser": "^3.2.0",
     "koa-router": "^7.0.1",
     "mongoose": "^4.7.0",
+    "node-fetch": "^1.6.3",
     "q": "^1.4.1",
     "request": "^2.79.0"
   },
+  "apps": [
+    {
+      "name": "koa-video",
+      "script": "index.js",
+      "instances": 1,
+      "exec_mode": "cluster",
+      "error_file": "../shared/logs/stderr.log",
+      "out_file": "../shared/logs/stdout.log",
+      "pid_file": "../shared/pids/pid",
+      "merge_logs": true,
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  ],
   "devDependencies": {
     "babel-cli": "^6.18.0",
     "babel-core": "^6.18.2",

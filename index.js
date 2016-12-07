@@ -21,7 +21,8 @@ const Strategy = mongoose.model('Strategy', strategySchema);
 import ALY from 'aliyun-sdk'
 import Q from 'q';
 const  AliAccount = new AliMNS.Account(myEnv.AliAccount, myEnv.accessKeyId, myEnv.accessKeySecret);
-const mq = new AliMNS.MQ(myEnv.QueueName, AliAccount, "beijing-internal");
+const mq = new AliMNS.MQ(myEnv.QueueName, AliAccount, "hangzhou");
+import fetch from 'node-fetch';
 
 /**
  Middlewares
@@ -94,7 +95,8 @@ const updateStrategy = (Id) =>{
 		if(!jsonData && !jsonData.video && jsonData.video.split('com/').length < 0){
 			return null
 		}
-		objectPath = 'users/'+jsonData.owner+'/strategies/'+jsonData._id+'/vcr';
+
+		objectPath = 'users/'+jsonData.owner+'/strategies/vcr';
 		let inputJSON = {
 			"Bucket": myEnv.Bucket,
 			"Location": myEnv.Location,
@@ -117,8 +119,8 @@ const updateStrategy = (Id) =>{
 			"accessKeyId": myEnv.accessKeyId,
 			"secretAccessKey": myEnv.accessKeySecret,
 			"apiVersion": "2014-06-18",
-			"region": "mts.cn-beijing.aliyuncs.com",
-			"endpoint": "http://mts.cn-beijing.aliyuncs.com",
+			"region": myEnv.region,
+			"endpoint": myEnv.endpoint,
 		});
 		return Q.fcall(function () {
 			mts.submitSnapshotJob({
@@ -138,10 +140,11 @@ const updateStrategy = (Id) =>{
 				if (err) {
 					console.log(err)
 				}
-				console.log(data)
+				console.log("snapshot", data)
 				return data
 			});
 		}).then(function () {
+			console.log("=======转码、水印=======")
 			mts.submitJobs({// 转码、水印
 				Action: "SubmitJobs",
 				Input: JSON.stringify(inputJSON),
@@ -153,7 +156,7 @@ const updateStrategy = (Id) =>{
 				if (err) {
 					console.log(err);
 				}
-				console.log(data)
+				console.log("SubmitJobs", data)
 				return data
 			});
 		}).then(function () {
@@ -180,9 +183,23 @@ app.listen(3210, () => {
 			let messageBody = JSON.parse(message.Message.MessageBody);
 			console.log('notify===', messageBody);
 			if(messageBody && messageBody.strategy){
-				updateStrategy(messageBody.strategy);
+				Strategy.findById(messageBody.strategy).then(function (json) {
+					let jsonData = json.toJSON();
+					fetch(jsonData.video, {
+						method: 'GET',
+					}).then(function (response) {
+						if(response.ok){
+							updateStrategy(messageBody.strategy);
+						}else {
+							if(jsonData.video.search('aliyuncs.com') > 0 && jsonData.video.search('yuanzi-') > 0){
+								return false
+							}else{
+								return true;
+							}
+						}
+					})
+				})
 			}
-			return true
 		}
 	});
 	console.log('Listening on port 3210');
