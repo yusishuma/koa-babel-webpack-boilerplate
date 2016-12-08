@@ -132,7 +132,7 @@ const updateStrategy = (Id) =>{
 						"Location": myEnv.Location,
 						"Object": objectPath+'/'+Id + ".jpg"
 					},
-					"Time": "12500"
+					"Time": "2000"
 				}),
 				PipelineId: myEnv.PipelineId,
 				UserData: 'snapshot success'
@@ -185,20 +185,29 @@ app.listen(3210, () => {
 			if(messageBody && messageBody.strategy){
 				Strategy.findById(messageBody.strategy).then(function (json) {
 					let jsonData = json.toJSON();
+					if(!json || !json.video || jsonData.video.search('.m3u8') > 0){
+						return true;
+					}
 					fetch(jsonData.video, {
 						method: 'GET',
 					}).then(function (response) {
+						console.log(response.ok)
 						if(response.ok){
 							updateStrategy(messageBody.strategy);
+							return true;
 						}else {
-							if(jsonData.video.search('aliyuncs.com') > 0 && jsonData.video.search('yuanzi-') > 0){
-								return false
+							if(jsonData.video.search('aliyuncs.com') > 0 && jsonData.video.search('yuanzi-') > 0 && !jsonData.video.search('.m3u8') > 0){
+								console.log("---")
+								return false;
 							}else{
 								return true;
 							}
 						}
+
 					})
 				})
+			}else{
+				return true;
 			}
 		}
 	});

@@ -46,6 +46,8 @@
 
 	'use strict';
 
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 	__webpack_require__(1);
 
 	var _koa = __webpack_require__(2);
@@ -98,7 +100,7 @@
 
 	function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
-	var myEnv = JSON.parse(_dotenv2.default.config().configPro);
+	var myEnv = _dotenv2.default.config();
 	(0, _dotenvExpand2.default)(myEnv);
 	_mongoose2.default.connect(myEnv.Mongodb);
 	_mongoose2.default.Promise = __webpack_require__(12).Promise;
@@ -303,7 +305,7 @@
 							"Location": myEnv.Location,
 							"Object": objectPath + '/' + Id + ".jpg"
 						},
-						"Time": "12500"
+						"Time": "2000"
 					}),
 					PipelineId: myEnv.PipelineId,
 					UserData: 'snapshot success'
@@ -349,24 +351,29 @@
 	 launch
 	 */
 	app.listen(3210, function () {
-		console.log(JSON.parse(myEnv.configProduction).video);
 		mq.notifyRecv(function (err, message) {
 			if (err) {
 				// Best to restart the process when this occursthrow err;
 			} else {
-				(function () {
+				var _ret = function () {
 					var messageBody = JSON.parse(message.Message.MessageBody);
 					console.log('notify===', messageBody);
 					if (messageBody && messageBody.strategy) {
 						Strategy.findById(messageBody.strategy).then(function (json) {
 							var jsonData = json.toJSON();
+							if (!json || !json.video || jsonData.video.search('.m3u8') > 0) {
+								return true;
+							}
 							(0, _nodeFetch2.default)(jsonData.video, {
 								method: 'GET'
 							}).then(function (response) {
+								console.log(response.ok);
 								if (response.ok) {
 									updateStrategy(messageBody.strategy);
+									return true;
 								} else {
-									if (jsonData.video.search('aliyuncs.com') > 0 && jsonData.video.search('yuanzi-') > 0) {
+									if (jsonData.video.search('aliyuncs.com') > 0 && jsonData.video.search('yuanzi-') > 0 && !jsonData.video.search('.m3u8') > 0) {
+										console.log("---");
 										return false;
 									} else {
 										return true;
@@ -374,8 +381,14 @@
 								}
 							});
 						});
+					} else {
+						return {
+							v: true
+						};
 					}
-				})();
+				}();
+
+				if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
 			}
 		});
 		console.log('Listening on port 3210');

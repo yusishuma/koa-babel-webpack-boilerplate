@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "babel-node index.js",
     "build": "webpack",
-    "strat": "node bin/server.bundle.js",
+    "start": "node bin/server.bundle.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Romuald R. (romualdr)",
