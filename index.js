@@ -21,7 +21,7 @@ const Strategy = mongoose.model('Strategy', strategySchema);
 import ALY from 'aliyun-sdk'
 import Q from 'q';
 const  AliAccount = new AliMNS.Account(myEnv.AliAccount, myEnv.accessKeyId, myEnv.accessKeySecret);
-const mq = new AliMNS.MQ(myEnv.QueueName, AliAccount, "hangzhou");
+const mq = new AliMNS.MQ(myEnv.QueueName, AliAccount, myEnv.MQLocation);
 import fetch from 'node-fetch';
 
 /**

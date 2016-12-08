@@ -98,7 +98,7 @@
 
 	function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
-	var myEnv = _dotenv2.default.config();
+	var myEnv = JSON.parse(_dotenv2.default.config().configPro);
 	(0, _dotenvExpand2.default)(myEnv);
 	_mongoose2.default.connect(myEnv.Mongodb);
 	_mongoose2.default.Promise = __webpack_require__(12).Promise;
@@ -107,7 +107,7 @@
 	var Strategy = _mongoose2.default.model('Strategy', _strategy2.default);
 
 	var AliAccount = new _aliMns2.default.Account(myEnv.AliAccount, myEnv.accessKeyId, myEnv.accessKeySecret);
-	var mq = new _aliMns2.default.MQ(myEnv.QueueName, AliAccount, "hangzhou");
+	var mq = new _aliMns2.default.MQ(myEnv.QueueName, AliAccount, myEnv.MQLocation);
 
 
 	/**
@@ -349,6 +349,7 @@
 	 launch
 	 */
 	app.listen(3210, function () {
+		console.log(JSON.parse(myEnv.configProduction).video);
 		mq.notifyRecv(function (err, message) {
 			if (err) {
 				// Best to restart the process when this occursthrow err;

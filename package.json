@@ -28,12 +28,9 @@
   "apps": [
     {
       "name": "koa-video",
-      "script": "index.js",
+      "script": "bin/server.bundle.js",
       "instances": 1,
       "exec_mode": "cluster",
-      "error_file": "../shared/logs/stderr.log",
-      "out_file": "../shared/logs/stdout.log",
-      "pid_file": "../shared/pids/pid",
       "merge_logs": true,
       "env": {
         "NODE_ENV": "production"
