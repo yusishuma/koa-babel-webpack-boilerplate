@@ -357,7 +357,6 @@
 			} else {
 				var _ret = function () {
 					var messageBody = JSON.parse(message.Message.MessageBody);
-					console.log('notify===', messageBody);
 					if (messageBody && messageBody.strategy) {
 						Strategy.findById(messageBody.strategy).then(function (json) {
 							var jsonData = json.toJSON();

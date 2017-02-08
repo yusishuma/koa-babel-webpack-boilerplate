@@ -163,7 +163,7 @@ const updateStrategy = (Id) =>{
 			return json;
 		})
 	}).then(function (json) {
-		var url = myEnv.urlPrefix +objectPath+'/'+Id;
+		const url = myEnv.urlPrefix +objectPath+'/'+Id;
 		return Strategy.findByIdAndUpdate(json._id, {'$set': { video: url + '.m3u8','videoPoster': url+'.jpg'}})
 	}).then(function (result) {
 		return result;
@@ -181,7 +181,6 @@ app.listen(3210, () => {
 			// Best to restart the process when this occursthrow err;
 		}else {
 			let messageBody = JSON.parse(message.Message.MessageBody);
-			console.log('notify===', messageBody);
 			if(messageBody && messageBody.strategy){
 				Strategy.findById(messageBody.strategy).then(function (json) {
 					let jsonData = json.toJSON();
