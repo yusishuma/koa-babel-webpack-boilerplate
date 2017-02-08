@@ -84,87 +84,109 @@ router.get('/sendP', async (ctx, next) => {
 	})
 
 });
+
 /**
  * 转码、水印
  */
+const snapshotAndJob = (objectPath, url, Id) =>{
+    let inputJSON = {
+        "Bucket": myEnv.Bucket,
+        "Location": myEnv.Location,
+        "Object": url.split('com/')[1]
+    };
+    let outputsJSON = [{
+        "OutputObject": objectPath+'/'+Id,
+        "TemplateId": "S00000001-100020",
+        "WaterMarks": [{
+            "InputFile": {
+                "Bucket": myEnv.Bucket,
+                "Location": myEnv.Location,
+                "Object": "photo/watermark.png"
+            },
+            "WaterMarkTemplateId": myEnv.WaterMarkTemplateId,
+            "UserData": "testwatermark"
+        }],
+    }];
+    let mts = new ALY.MTS({
+        "accessKeyId": myEnv.accessKeyId,
+        "secretAccessKey": myEnv.accessKeySecret,
+        "apiVersion": "2014-06-18",
+        "region": myEnv.region,
+        "endpoint": myEnv.endpoint,
+    });
+    return Q.fcall(function () {
+        mts.submitSnapshotJob({
+            Action: "SubmitSnapshotJob",
+            Input: JSON.stringify(inputJSON),
+            SnapshotConfig: JSON.stringify({
+                "OutputFile": {
+                    "Bucket": myEnv.Bucket,
+                    "Location": myEnv.Location,
+                    "Object": objectPath+'/'+Id + ".jpg"
+                },
+                "Time": "2000"
+            }),
+            PipelineId: myEnv.PipelineId,
+            UserData: 'snapshot success'
+        }, function (err, data) {
+            if (err) {
+                console.log(err)
+            }
+            console.log("snapshot", data)
+            return data
+        });
+    }).then(function () {
+        console.log("=======转码、水印=======")
+        mts.submitJobs({// 转码、水印
+            Action: "SubmitJobs",
+            Input: JSON.stringify(inputJSON),
+            Outputs: JSON.stringify(outputsJSON),
+            OutputBucket: myEnv.Bucket,
+            OutputLocation: myEnv.Location,
+            PipelineId: myEnv.PipelineId
+        }, function (err, data) {
+            if (err) {
+                console.log(err);
+            }
+            console.log("SubmitJobs", data)
+            return data
+        });
+    })
+}
+
 const updateStrategy = (Id) =>{
 	let jsonData = {};
-	let objectPath = "";
+    let objectPath = 'users/'+jsonData.owner+'/strategies';
 	Strategy.findById(Id).then(function (json) {
 		jsonData = json.toJSON();
-		if(!jsonData && !jsonData.video && jsonData.video.split('com/').length < 0){
-			return null
+		if(jsonData && jsonData.video && jsonData.video.split('com/').length > 0){
+			return snapshotAndJob(objectPath+'/vcr', jsonData.video, Id).then(function () {
+                return json;
+            }).then(function (json) {
+                const url = myEnv.urlPrefix +objectPath+'/vcr'+'/'+Id;
+                return Strategy.findByIdAndUpdate(json._id, {'$set': { video: url + '.m3u8','videoPoster': url+'.jpg'}})
+            })
+		}else if(jsonData && jsonData.steps){
+			return Q.all(jsonData.steps.map(function (item) {
+                if(item.video.split('com/').length > 0){
+                    snapshotAndJob(objectPath, item.video, Id).then(function (json) {
+                        return json;
+                    })
+                }else{
+                	return null;
+				}
+            })).then(function (result) {
+                for(let i = 0; i < jsonData.steps.length; i ++){
+                    let item = jsonData.steps[i];
+                    if(item.video.split('com/').length > 0){
+                        const url = myEnv.urlPrefix +objectPath+'/steps'+Id+i;
+                        json.steps[i].video = url;
+                        json.steps[i].imgUrl = url+'.jpg';
+                    }
+                }
+                return Strategy.findByIdAndUpdate(json._id, {'$set': { steps: json.steps}})
+            });
 		}
-
-		objectPath = 'users/'+jsonData.owner+'/strategies/vcr';
-		let inputJSON = {
-			"Bucket": myEnv.Bucket,
-			"Location": myEnv.Location,
-			"Object": jsonData.video.split('com/')[1]
-		};
-		let outputsJSON = [{
-			"OutputObject": objectPath+'/'+Id,
-			"TemplateId": "S00000001-100020",
-			"WaterMarks": [{
-				"InputFile": {
-					"Bucket": myEnv.Bucket,
-					"Location": myEnv.Location,
-					"Object": "photo/watermark.png"
-				},
-				"WaterMarkTemplateId": myEnv.WaterMarkTemplateId,
-				"UserData": "testwatermark"
-			}],
-		}];
-		let mts = new ALY.MTS({
-			"accessKeyId": myEnv.accessKeyId,
-			"secretAccessKey": myEnv.accessKeySecret,
-			"apiVersion": "2014-06-18",
-			"region": myEnv.region,
-			"endpoint": myEnv.endpoint,
-		});
-		return Q.fcall(function () {
-			mts.submitSnapshotJob({
-				Action: "SubmitSnapshotJob",
-				Input: JSON.stringify(inputJSON),
-				SnapshotConfig: JSON.stringify({
-					"OutputFile": {
-						"Bucket": myEnv.Bucket,
-						"Location": myEnv.Location,
-						"Object": objectPath+'/'+Id + ".jpg"
-					},
-					"Time": "2000"
-				}),
-				PipelineId: myEnv.PipelineId,
-				UserData: 'snapshot success'
-			}, function (err, data) {
-				if (err) {
-					console.log(err)
-				}
-				console.log("snapshot", data)
-				return data
-			});
-		}).then(function () {
-			console.log("=======转码、水印=======")
-			mts.submitJobs({// 转码、水印
-				Action: "SubmitJobs",
-				Input: JSON.stringify(inputJSON),
-				Outputs: JSON.stringify(outputsJSON),
-				OutputBucket: myEnv.Bucket,
-				OutputLocation: myEnv.Location,
-				PipelineId: myEnv.PipelineId
-			}, function (err, data) {
-				if (err) {
-					console.log(err);
-				}
-				console.log("SubmitJobs", data)
-				return data
-			});
-		}).then(function () {
-			return json;
-		})
-	}).then(function (json) {
-		const url = myEnv.urlPrefix +objectPath+'/'+Id;
-		return Strategy.findByIdAndUpdate(json._id, {'$set': { video: url + '.m3u8','videoPoster': url+'.jpg'}})
 	}).then(function (result) {
 		return result;
 	}).catch((err) => {
