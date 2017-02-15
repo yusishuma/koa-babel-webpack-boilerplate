@@ -75,7 +75,9 @@ router.get('/', (ctx, next) => {
  */
 router.get('/sendP', async (ctx, next) => {
 	let strategy = ctx.request.query.strategy;
-	Strategy.findById(strategy).then(function (json) {
+console.log('===========');
+Strategy.findById(strategy).then(function (json) {
+		console.log('===========');
 		mq.sendP(JSON.stringify({"strategy": strategy}), 8, 0).then(function (err, result) {
 			ctx.body = {message:'successed'};
 		});
@@ -159,7 +161,7 @@ const updateStrategy = (Id) =>{
     let objectPath = 'users/'+jsonData.owner+'/strategies';
 	Strategy.findById(Id).then(function (json) {
 		jsonData = json.toJSON();
-		if(jsonData && jsonData.video && jsonData.video.split('com/').length > 0){
+		if(jsonData && jsonData.video && jsonData.video.search('.m3u8') < 0){
 			return snapshotAndJob(objectPath+'/vcr', jsonData.video, Id).then(function () {
                 return json;
             }).then(function (json) {
@@ -168,7 +170,7 @@ const updateStrategy = (Id) =>{
             })
 		}else if(jsonData && jsonData.steps){
 			return Q.all(jsonData.steps.map(function (item) {
-                if(item.video.split('com/').length > 0){
+                if(item.video && item.video.search('.m3u8') < 0){
                     snapshotAndJob(objectPath, item.video, Id).then(function (json) {
                         return json;
                     })
@@ -178,7 +180,7 @@ const updateStrategy = (Id) =>{
             })).then(function (result) {
                 for(let i = 0; i < jsonData.steps.length; i ++){
                     let item = jsonData.steps[i];
-                    if(item.video.split('com/').length > 0){
+                    if(item.video.search('.m3u8') < 0){
                         const url = myEnv.urlPrefix +objectPath+'/steps'+Id+i;
                         json.steps[i].video = url;
                         json.steps[i].imgUrl = url+'.jpg';
@@ -199,6 +201,7 @@ const updateStrategy = (Id) =>{
  */
 app.listen(3210, () => {
 	mq.notifyRecv(function(err, message){
+		console.log('===========',message)
 		if(err){
 			// Best to restart the process when this occursthrow err;
 		}else {
@@ -217,12 +220,7 @@ app.listen(3210, () => {
 							updateStrategy(messageBody.strategy);
 							return true;
 						}else {
-							if(jsonData.video.search('aliyuncs.com') > 0 && jsonData.video.search('yuanzi-') > 0 && !jsonData.video.search('.m3u8') > 0){
-								console.log("---")
-								return false;
-							}else{
-								return true;
-							}
+                            return true;
 						}
 
 					})

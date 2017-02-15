@@ -119,98 +119,98 @@
 	app
 	// Counting time
 	.use(function () {
-		var _ref = _asyncToGenerator(regeneratorRuntime.mark(function _callee(ctx, next) {
-			var start;
-			return regeneratorRuntime.wrap(function _callee$(_context) {
-				while (1) {
-					switch (_context.prev = _context.next) {
-						case 0:
-							start = Date.now();
-							_context.next = 3;
-							return next();
+	  var _ref = _asyncToGenerator(regeneratorRuntime.mark(function _callee(ctx, next) {
+	    var start;
+	    return regeneratorRuntime.wrap(function _callee$(_context) {
+	      while (1) {
+	        switch (_context.prev = _context.next) {
+	          case 0:
+	            start = Date.now();
+	            _context.next = 3;
+	            return next();
 
-						case 3:
-							console.log('[' + ctx.request.method + '][' + ctx.request.url + '] ' + (Date.now() - start) + ' ms.');
+	          case 3:
+	            console.log('[' + ctx.request.method + '][' + ctx.request.url + '] ' + (Date.now() - start) + ' ms.');
 
-						case 4:
-						case 'end':
-							return _context.stop();
-					}
-				}
-			}, _callee, undefined);
-		}));
+	          case 4:
+	          case 'end':
+	            return _context.stop();
+	        }
+	      }
+	    }, _callee, undefined);
+	  }));
 
-		return function (_x, _x2) {
-			return _ref.apply(this, arguments);
-		};
+	  return function (_x, _x2) {
+	    return _ref.apply(this, arguments);
+	  };
 	}()).use(function () {
-		var _ref2 = _asyncToGenerator(regeneratorRuntime.mark(function _callee2(ctx, next) {
-			return regeneratorRuntime.wrap(function _callee2$(_context2) {
-				while (1) {
-					switch (_context2.prev = _context2.next) {
-						case 0:
-							_context2.prev = 0;
-							_context2.next = 3;
-							return next();
+	  var _ref2 = _asyncToGenerator(regeneratorRuntime.mark(function _callee2(ctx, next) {
+	    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+	      while (1) {
+	        switch (_context2.prev = _context2.next) {
+	          case 0:
+	            _context2.prev = 0;
+	            _context2.next = 3;
+	            return next();
 
-						case 3:
-							if (ctx.body) {
-								_context2.next = 5;
-								break;
-							}
+	          case 3:
+	            if (ctx.body) {
+	              _context2.next = 5;
+	              break;
+	            }
 
-							throw new _exceptions.Exceptions.NotFound('Endpoint [' + ctx.request.url + '] not found.');
+	            throw new _exceptions.Exceptions.NotFound('Endpoint [' + ctx.request.url + '] not found.');
 
-						case 5:
-							ctx.body = {
-								ok: true,
-								content: ctx.body
-							};
-							_context2.next = 11;
-							break;
+	          case 5:
+	            ctx.body = {
+	              ok: true,
+	              content: ctx.body
+	            };
+	            _context2.next = 11;
+	            break;
 
-						case 8:
-							_context2.prev = 8;
-							_context2.t0 = _context2['catch'](0);
+	          case 8:
+	            _context2.prev = 8;
+	            _context2.t0 = _context2['catch'](0);
 
-							ctx.body = (0, _exceptions.ExceptionHandler)(_context2.t0);
+	            ctx.body = (0, _exceptions.ExceptionHandler)(_context2.t0);
 
-						case 11:
-						case 'end':
-							return _context2.stop();
-					}
-				}
-			}, _callee2, undefined, [[0, 8]]);
-		}));
+	          case 11:
+	          case 'end':
+	            return _context2.stop();
+	        }
+	      }
+	    }, _callee2, undefined, [[0, 8]]);
+	  }));
 
-		return function (_x3, _x4) {
-			return _ref2.apply(this, arguments);
-		};
+	  return function (_x3, _x4) {
+	    return _ref2.apply(this, arguments);
+	  };
 	}())
 	// Body parser
 	.use((0, _koaBodyparser2.default)()).use(function () {
-		var _ref3 = _asyncToGenerator(regeneratorRuntime.mark(function _callee3(ctx, next) {
-			return regeneratorRuntime.wrap(function _callee3$(_context3) {
-				while (1) {
-					switch (_context3.prev = _context3.next) {
-						case 0:
-							ctx.state = {};
-							ctx.state.query = ctx.request.query;
-							ctx.state.body = ctx.request.body;
-							_context3.next = 5;
-							return next();
+	  var _ref3 = _asyncToGenerator(regeneratorRuntime.mark(function _callee3(ctx, next) {
+	    return regeneratorRuntime.wrap(function _callee3$(_context3) {
+	      while (1) {
+	        switch (_context3.prev = _context3.next) {
+	          case 0:
+	            ctx.state = {};
+	            ctx.state.query = ctx.request.query;
+	            ctx.state.body = ctx.request.body;
+	            _context3.next = 5;
+	            return next();
 
-						case 5:
-						case 'end':
-							return _context3.stop();
-					}
-				}
-			}, _callee3, undefined);
-		}));
+	          case 5:
+	          case 'end':
+	            return _context3.stop();
+	        }
+	      }
+	    }, _callee3, undefined);
+	  }));
 
-		return function (_x5, _x6) {
-			return _ref3.apply(this, arguments);
-		};
+	  return function (_x5, _x6) {
+	    return _ref3.apply(this, arguments);
+	  };
 	}())
 	// routes
 	.use(router.routes())
@@ -223,174 +223,194 @@
 
 	router.get('/', function (ctx, next) {
 
-		ctx.body = { hello: "world" };
+	  ctx.body = { hello: "world" };
 	});
 	/**
 	 * 发送消息
 	 */
 	router.get('/sendP', function () {
-		var _ref4 = _asyncToGenerator(regeneratorRuntime.mark(function _callee4(ctx, next) {
-			var strategy;
-			return regeneratorRuntime.wrap(function _callee4$(_context4) {
-				while (1) {
-					switch (_context4.prev = _context4.next) {
-						case 0:
-							strategy = ctx.request.query.strategy;
+	  var _ref4 = _asyncToGenerator(regeneratorRuntime.mark(function _callee4(ctx, next) {
+	    var strategy;
+	    return regeneratorRuntime.wrap(function _callee4$(_context4) {
+	      while (1) {
+	        switch (_context4.prev = _context4.next) {
+	          case 0:
+	            strategy = ctx.request.query.strategy;
 
-							Strategy.findById(strategy).then(function (json) {
-								mq.sendP(JSON.stringify({ "strategy": strategy }), 8, 0).then(function (err, result) {
-									ctx.body = { message: 'successed' };
-								});
-							}).catch(function (err) {
-								ctx.body = { message: '没有该妙招' };
-							});
+	            console.log('===========');
+	            Strategy.findById(strategy).then(function (json) {
+	              console.log('===========');
+	              mq.sendP(JSON.stringify({ "strategy": strategy }), 8, 0).then(function (err, result) {
+	                ctx.body = { message: 'successed' };
+	              });
+	            }).catch(function (err) {
+	              ctx.body = { message: '没有该妙招' };
+	            });
 
-						case 2:
-						case 'end':
-							return _context4.stop();
-					}
-				}
-			}, _callee4, undefined);
-		}));
+	          case 3:
+	          case 'end':
+	            return _context4.stop();
+	        }
+	      }
+	    }, _callee4, undefined);
+	  }));
 
-		return function (_x7, _x8) {
-			return _ref4.apply(this, arguments);
-		};
+	  return function (_x7, _x8) {
+	    return _ref4.apply(this, arguments);
+	  };
 	}());
+
 	/**
 	 * 转码、水印
 	 */
-	var updateStrategy = function updateStrategy(Id) {
-		var jsonData = {};
-		var objectPath = "";
-		Strategy.findById(Id).then(function (json) {
-			jsonData = json.toJSON();
-			if (!jsonData && !jsonData.video && jsonData.video.split('com/').length < 0) {
-				return null;
-			}
+	var snapshotAndJob = function snapshotAndJob(objectPath, url, Id) {
+	  var inputJSON = {
+	    "Bucket": myEnv.Bucket,
+	    "Location": myEnv.Location,
+	    "Object": url.split('com/')[1]
+	  };
+	  var outputsJSON = [{
+	    "OutputObject": objectPath + '/' + Id,
+	    "TemplateId": "S00000001-100020",
+	    "WaterMarks": [{
+	      "InputFile": {
+	        "Bucket": myEnv.Bucket,
+	        "Location": myEnv.Location,
+	        "Object": "photo/watermark.png"
+	      },
+	      "WaterMarkTemplateId": myEnv.WaterMarkTemplateId,
+	      "UserData": "testwatermark"
+	    }]
+	  }];
+	  var mts = new _aliyunSdk2.default.MTS({
+	    "accessKeyId": myEnv.accessKeyId,
+	    "secretAccessKey": myEnv.accessKeySecret,
+	    "apiVersion": "2014-06-18",
+	    "region": myEnv.region,
+	    "endpoint": myEnv.endpoint
+	  });
+	  return _q2.default.fcall(function () {
+	    mts.submitSnapshotJob({
+	      Action: "SubmitSnapshotJob",
+	      Input: JSON.stringify(inputJSON),
+	      SnapshotConfig: JSON.stringify({
+	        "OutputFile": {
+	          "Bucket": myEnv.Bucket,
+	          "Location": myEnv.Location,
+	          "Object": objectPath + '/' + Id + ".jpg"
+	        },
+	        "Time": "2000"
+	      }),
+	      PipelineId: myEnv.PipelineId,
+	      UserData: 'snapshot success'
+	    }, function (err, data) {
+	      if (err) {
+	        console.log(err);
+	      }
+	      console.log("snapshot", data);
+	      return data;
+	    });
+	  }).then(function () {
+	    console.log("=======转码、水印=======");
+	    mts.submitJobs({ // 转码、水印
+	      Action: "SubmitJobs",
+	      Input: JSON.stringify(inputJSON),
+	      Outputs: JSON.stringify(outputsJSON),
+	      OutputBucket: myEnv.Bucket,
+	      OutputLocation: myEnv.Location,
+	      PipelineId: myEnv.PipelineId
+	    }, function (err, data) {
+	      if (err) {
+	        console.log(err);
+	      }
+	      console.log("SubmitJobs", data);
+	      return data;
+	    });
+	  });
+	};
 
-			objectPath = 'users/' + jsonData.owner + '/strategies/vcr';
-			var inputJSON = {
-				"Bucket": myEnv.Bucket,
-				"Location": myEnv.Location,
-				"Object": jsonData.video.split('com/')[1]
-			};
-			var outputsJSON = [{
-				"OutputObject": objectPath + '/' + Id,
-				"TemplateId": "S00000001-100020",
-				"WaterMarks": [{
-					"InputFile": {
-						"Bucket": myEnv.Bucket,
-						"Location": myEnv.Location,
-						"Object": "photo/watermark.png"
-					},
-					"WaterMarkTemplateId": myEnv.WaterMarkTemplateId,
-					"UserData": "testwatermark"
-				}]
-			}];
-			var mts = new _aliyunSdk2.default.MTS({
-				"accessKeyId": myEnv.accessKeyId,
-				"secretAccessKey": myEnv.accessKeySecret,
-				"apiVersion": "2014-06-18",
-				"region": myEnv.region,
-				"endpoint": myEnv.endpoint
-			});
-			return _q2.default.fcall(function () {
-				mts.submitSnapshotJob({
-					Action: "SubmitSnapshotJob",
-					Input: JSON.stringify(inputJSON),
-					SnapshotConfig: JSON.stringify({
-						"OutputFile": {
-							"Bucket": myEnv.Bucket,
-							"Location": myEnv.Location,
-							"Object": objectPath + '/' + Id + ".jpg"
-						},
-						"Time": "2000"
-					}),
-					PipelineId: myEnv.PipelineId,
-					UserData: 'snapshot success'
-				}, function (err, data) {
-					if (err) {
-						console.log(err);
-					}
-					console.log("snapshot", data);
-					return data;
-				});
-			}).then(function () {
-				console.log("=======转码、水印=======");
-				mts.submitJobs({ // 转码、水印
-					Action: "SubmitJobs",
-					Input: JSON.stringify(inputJSON),
-					Outputs: JSON.stringify(outputsJSON),
-					OutputBucket: myEnv.Bucket,
-					OutputLocation: myEnv.Location,
-					PipelineId: myEnv.PipelineId
-				}, function (err, data) {
-					if (err) {
-						console.log(err);
-					}
-					console.log("SubmitJobs", data);
-					return data;
-				});
-			}).then(function () {
-				return json;
-			});
-		}).then(function (json) {
-			var url = myEnv.urlPrefix + objectPath + '/' + Id;
-			return Strategy.findByIdAndUpdate(json._id, { '$set': { video: url + '.m3u8', 'videoPoster': url + '.jpg' } });
-		}).then(function (result) {
-			return result;
-		}).catch(function (err) {
-			if (err) {
-				console.log(err);
-			}
-		});
+	var updateStrategy = function updateStrategy(Id) {
+	  var jsonData = {};
+	  var objectPath = 'users/' + jsonData.owner + '/strategies';
+	  Strategy.findById(Id).then(function (json) {
+	    jsonData = json.toJSON();
+	    if (jsonData && jsonData.video && jsonData.video.search('.m3u8') < 0) {
+	      return snapshotAndJob(objectPath + '/vcr', jsonData.video, Id).then(function () {
+	        return json;
+	      }).then(function (json) {
+	        var url = myEnv.urlPrefix + objectPath + '/vcr' + '/' + Id;
+	        return Strategy.findByIdAndUpdate(json._id, { '$set': { video: url + '.m3u8', 'videoPoster': url + '.jpg' } });
+	      });
+	    } else if (jsonData && jsonData.steps) {
+	      return _q2.default.all(jsonData.steps.map(function (item) {
+	        if (item.video && item.video.search('.m3u8') < 0) {
+	          snapshotAndJob(objectPath, item.video, Id).then(function (json) {
+	            return json;
+	          });
+	        } else {
+	          return null;
+	        }
+	      })).then(function (result) {
+	        for (var i = 0; i < jsonData.steps.length; i++) {
+	          var item = jsonData.steps[i];
+	          if (item.video.search('.m3u8') < 0) {
+	            var url = myEnv.urlPrefix + objectPath + '/steps' + Id + i;
+	            json.steps[i].video = url;
+	            json.steps[i].imgUrl = url + '.jpg';
+	          }
+	        }
+	        return Strategy.findByIdAndUpdate(json._id, { '$set': { steps: json.steps } });
+	      });
+	    }
+	  }).then(function (result) {
+	    return result;
+	  }).catch(function (err) {
+	    if (err) {
+	      console.log(err);
+	    }
+	  });
 	};
 
 	/**
 	 launch
 	 */
 	app.listen(3210, function () {
-		mq.notifyRecv(function (err, message) {
-			if (err) {
-				// Best to restart the process when this occursthrow err;
-			} else {
-				var _ret = function () {
-					var messageBody = JSON.parse(message.Message.MessageBody);
-					if (messageBody && messageBody.strategy) {
-						Strategy.findById(messageBody.strategy).then(function (json) {
-							var jsonData = json.toJSON();
-							if (!json || !json.video || jsonData.video.search('.m3u8') > 0) {
-								return true;
-							}
-							(0, _nodeFetch2.default)(jsonData.video, {
-								method: 'GET'
-							}).then(function (response) {
-								console.log(response.ok);
-								if (response.ok) {
-									updateStrategy(messageBody.strategy);
-									return true;
-								} else {
-									if (jsonData.video.search('aliyuncs.com') > 0 && jsonData.video.search('yuanzi-') > 0 && !jsonData.video.search('.m3u8') > 0) {
-										console.log("---");
-										return false;
-									} else {
-										return true;
-									}
-								}
-							});
-						});
-					} else {
-						return {
-							v: true
-						};
-					}
-				}();
+	  mq.notifyRecv(function (err, message) {
+	    console.log('===========', message);
+	    if (err) {
+	      // Best to restart the process when this occursthrow err;
+	    } else {
+	      var _ret = function () {
+	        var messageBody = JSON.parse(message.Message.MessageBody);
+	        if (messageBody && messageBody.strategy) {
+	          Strategy.findById(messageBody.strategy).then(function (json) {
+	            var jsonData = json.toJSON();
+	            if (!json || !json.video || jsonData.video.search('.m3u8') > 0) {
+	              return true;
+	            }
+	            (0, _nodeFetch2.default)(jsonData.video, {
+	              method: 'GET'
+	            }).then(function (response) {
+	              console.log(response.ok);
+	              if (response.ok) {
+	                updateStrategy(messageBody.strategy);
+	                return true;
+	              } else {
+	                return true;
+	              }
+	            });
+	          });
+	        } else {
+	          return {
+	            v: true
+	          };
+	        }
+	      }();
 
-				if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
-			}
-		});
-		console.log('Listening on port 3210');
+	      if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+	    }
+	  });
+	  console.log('Listening on port 3210');
 	});
 
 /***/ },
