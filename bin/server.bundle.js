@@ -46,8 +46,6 @@
 
 	'use strict';
 
-	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 	__webpack_require__(1);
 
 	var _koa = __webpack_require__(2);
@@ -237,9 +235,7 @@
 	          case 0:
 	            strategy = ctx.request.query.strategy;
 
-	            console.log('===========');
 	            Strategy.findById(strategy).then(function (json) {
-	              console.log('===========');
 	              mq.sendP(JSON.stringify({ "strategy": strategy }), 8, 0).then(function (err, result) {
 	                ctx.body = { message: 'successed' };
 	              });
@@ -247,7 +243,7 @@
 	              ctx.body = { message: '没有该妙招' };
 	            });
 
-	          case 3:
+	          case 2:
 	          case 'end':
 	            return _context4.stop();
 	        }
@@ -376,38 +372,14 @@
 	 */
 	app.listen(3210, function () {
 	  mq.notifyRecv(function (err, message) {
-	    console.log('===========', message);
 	    if (err) {
 	      // Best to restart the process when this occursthrow err;
 	    } else {
-	      var _ret = function () {
-	        var messageBody = JSON.parse(message.Message.MessageBody);
-	        if (messageBody && messageBody.strategy) {
-	          Strategy.findById(messageBody.strategy).then(function (json) {
-	            var jsonData = json.toJSON();
-	            if (!json || !json.video || jsonData.video.search('.m3u8') > 0) {
-	              return true;
-	            }
-	            (0, _nodeFetch2.default)(jsonData.video, {
-	              method: 'GET'
-	            }).then(function (response) {
-	              console.log(response.ok);
-	              if (response.ok) {
-	                updateStrategy(messageBody.strategy);
-	                return true;
-	              } else {
-	                return true;
-	              }
-	            });
-	          });
-	        } else {
-	          return {
-	            v: true
-	          };
-	        }
-	      }();
-
-	      if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+	      var messageBody = JSON.parse(message.Message.MessageBody);
+	      if (messageBody && messageBody.strategy) {
+	        updateStrategy(messageBody.strategy);
+	        return true;
+	      }
 	    }
 	  });
 	  console.log('Listening on port 3210');
